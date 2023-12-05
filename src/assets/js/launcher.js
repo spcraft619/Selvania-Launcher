@@ -1,5 +1,5 @@
 /**
- * @author Luuxis
+ * @author zquw
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0/
  */
 
@@ -43,16 +43,6 @@ class Launcher {
 
         document.querySelector("#minimize").addEventListener("click", () => {
             ipcRenderer.send("main-window-minimize");
-        });
-
-        let maximized = false;
-        let maximize = document.querySelector("#maximize")
-        maximize.addEventListener("click", () => {
-            if (maximized) ipcRenderer.send("main-window-maximize")
-            else ipcRenderer.send("main-window-maximize");
-            maximized = !maximized
-            maximize.classList.toggle("icon-maximize")
-            maximize.classList.toggle("icon-restore-down")
         });
 
         document.querySelector("#close").addEventListener("click", () => {

@@ -1,8 +1,3 @@
-/**
- * @author Luuxis
- * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0/
- */
-
 'use strict';
 const { ipcRenderer } = require('electron');
 import { config } from './utils.js';
@@ -22,10 +17,10 @@ class Splash {
 
     async startAnimation() {
         let splashes = [
-            { "message": "Je... vie...", "author": "Luuxis" },
-            { "message": "Salut je suis du code.", "author": "Luuxis" },
-            { "message": "Linux n' ai pas un os, mais un kernel.", "author": "Luuxis" }
-        ]
+            { "message": "", "author": "DylexDMC" },
+            { "message": "", "author": "DylexDMC" },
+            { "message": "", "author": "DylexDMC" }
+        ];
         let splash = splashes[Math.floor(Math.random() * splashes.length)];
         this.splashMessage.textContent = splash.message;
         this.splashAuthor.children[0].textContent = "@" + splash.author;
@@ -39,24 +34,27 @@ class Splash {
         this.splashAuthor.classList.add("opacity");
         this.message.classList.add("opacity");
         await sleep(1000);
-        this.checkUpdate();
+        this.maintenanceCheck();
+    }
+
+    async maintenanceCheck() {
+        if (dev) return this.startLauncher();
+        config.GetConfig().then(res => {
+            if (res.maintenance) return this.shutdown(res.maintenance_message);
+            else this.checkUpdate();
+        }).catch(e => {
+            console.error(e);
+            return this.shutdown("No se ha detectado conexión a Internet 🌐,<br>Por favor, inténtelo de nuevo más tarde.");
+        })
     }
 
     async checkUpdate() {
-        if (dev) return this.startLauncher();
-        this.setStatus(`recherche de mise à jour...`);
-
-        ipcRenderer.invoke('update-app').then(err => {
-            if (err.error) {
-                let error = err.message;
-                this.shutdown(`erreur lors de la recherche de mise à jour :<br>${error}`);
-            }
-        })
+        this.setStatus(`Buscaando actualización... 🔄️`);
+        ipcRenderer.send('update-app');
 
         ipcRenderer.on('updateAvailable', () => {
-            this.setStatus(`Mise à jour disponible !`);
+            this.setStatus(`Actualización disponible ! ✅`);
             this.toggleProgress();
-            ipcRenderer.send('start-update');
         })
 
         ipcRenderer.on('download-progress', (event, progress) => {
@@ -64,31 +62,22 @@ class Splash {
         })
 
         ipcRenderer.on('update-not-available', () => {
-            this.maintenanceCheck();
+            this.startLauncher();
         })
     }
 
-    async maintenanceCheck() {
-        config.GetConfig().then(res => {
-            if (res.maintenance) return this.shutdown(res.maintenance_message);
-            this.startLauncher();
-        }).catch(e => {
-            console.error(e);
-            return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
-        })
-    }
 
     startLauncher() {
-        this.setStatus(`Démarrage du launcher`);
+        this.setStatus(`Iniciando el Launcher ⏳`);
         ipcRenderer.send('main-window-open');
         ipcRenderer.send('update-window-close');
     }
 
     shutdown(text) {
-        this.setStatus(`${text}<br>Arrêt dans 5s`);
+        this.setStatus(`${text}<br>Pasa por aquí 5s ❌`);
         let i = 4;
         setInterval(() => {
-            this.setStatus(`${text}<br>Arrêt dans ${i--}s`);
+            this.setStatus(`${text}<br>Pasa por aquí ${i--}s ❌`);
             if (i < 0) ipcRenderer.send('update-window-close');
         }, 1000);
     }
